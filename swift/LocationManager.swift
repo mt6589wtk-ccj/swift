@@ -39,7 +39,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyBest // 最高精度
         manager.distanceFilter = 10 // 每移動 10 公尺更新一次，省電
         manager.allowsBackgroundLocationUpdates = true // 允許背景更新
-        manager.showsBackgroundLocationIndicator = true
+        manager.showsBackgroundLocationIndicator = true // 在手機頂部顯示藍色定位標籤，這能增加穩定性
         manager.pausesLocationUpdatesAutomatically = false // 不要自動暫停
     }
 
