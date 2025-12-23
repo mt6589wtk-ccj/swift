@@ -41,6 +41,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         manager.allowsBackgroundLocationUpdates = true // 允許背景更新
         manager.showsBackgroundLocationIndicator = true // 在手機頂部顯示藍色定位標籤，這能增加穩定性
         manager.pausesLocationUpdatesAutomatically = false // 不要自動暫停
+        
+        manager.requestAlwaysAuthorization() // 要求背景定位
     }
 
     func requestPermission() {
