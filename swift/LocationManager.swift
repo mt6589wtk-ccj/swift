@@ -1,5 +1,6 @@
 import CoreLocation
 import Observation
+import SwiftData
 
 @Observable
 class LocationManager: NSObject, CLLocationManagerDelegate {
@@ -10,6 +11,27 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     
     // 記錄目前是否正在追蹤中
     var isTracking: Bool = false
+    
+    @MainActor
+        func saveCurrentRoute(context: ModelContext) {
+            guard !trackPoints.isEmpty else { return }
+            
+            let lats = trackPoints.map { $0.latitude }
+            let lons = trackPoints.map { $0.longitude }
+            
+            let newRoute = SavedRoute(startTime: Date(), latitudes: lats, longitudes: lons)
+            newRoute.endTime = Date()
+            
+            context.insert(newRoute) // 插入資料庫
+            
+            do {
+                try context.save()
+                print("路徑存檔成功！")
+                trackPoints.removeAll() // 存完後清空當前畫面線條
+            } catch {
+                print("存檔失敗: \(error)")
+            }
+        }
 
     override init() {
         super.init()

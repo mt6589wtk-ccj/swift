@@ -1,11 +1,5 @@
-//
-//  swiftApp.swift
-//  swift
-//
-//  Created by 訪客使用者 on 2025/12/23.
-//
-
 import SwiftUI
+import SwiftData // 1. 導入庫
 
 @main
 struct swiftApp: App {
@@ -13,5 +7,6 @@ struct swiftApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: SavedRoute.self) // 2. 指定存儲模型
     }
 }

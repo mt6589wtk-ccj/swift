@@ -21,7 +21,7 @@ struct TimelineView: View {
                             .frame(width: 30, height: 30)
                             .foregroundColor(.blue)
                         
-                        Text("Taichung Circuit") // 你的專案名稱
+                        Text("GPS records") // 你的專案名稱
                             .font(.headline)
                             .fontWeight(.bold)
                     }
@@ -143,5 +143,23 @@ struct MemberCenterView: View {
             }
         }
         .padding(.top, 50)
+    }
+}
+
+// 歷史列表頁面
+struct HistoryListView: View {
+    var routes: [SavedRoute]
+    var body: some View {
+        NavigationStack {
+            List(routes) { route in
+                VStack(alignment: .leading) {
+                    Text(route.startTime.formatted(date: .abbreviated, time: .shortened))
+                        .font(.headline)
+                    Text("共紀錄 \(route.latitudes.count) 個座標點")
+                        .font(.caption).foregroundColor(.gray)
+                }
+            }
+            .navigationTitle("歷史路徑")
+        }
     }
 }
