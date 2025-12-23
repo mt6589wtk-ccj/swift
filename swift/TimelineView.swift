@@ -3,9 +3,12 @@ import MapKit
 
 struct TimelineView: View {
     @Bindable var locationManager: LocationManager
+    // 1. 初始化相機位置
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
     
-    // 控制是否顯示會員中心（之後可以跳轉頁面）
+    // 2. 新增：紀錄目前的縮放跨度，預設為 0.05
+    @State private var currentSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    
     @State private var showMemberCenter = false
 
     var body: some View {
@@ -13,22 +16,20 @@ struct TimelineView: View {
             VStack(spacing: 0) {
                 // --- 自定義上方 Header 區域 ---
                 HStack {
-                    // 左邊：Logo (這裡先用系統圖示代替，你可以換成自己的圖片)
                     HStack(spacing: 8) {
-                        Image(systemName: "map.fill") // 替換成你的 Logo 圖片：Image("your_logo_name")
+                        Image(systemName: "map.fill")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 30, height: 30)
                             .foregroundColor(.blue)
                         
-                        Text("GPS records") // 你的專案名稱
+                        Text("GPS records")
                             .font(.headline)
                             .fontWeight(.bold)
                     }
                     
                     Spacer()
                     
-                    // 右邊：會員中心按鈕
                     Button {
                         showMemberCenter = true
                     } label: {
@@ -44,9 +45,9 @@ struct TimelineView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 10)
-                .background(Color(.systemBackground)) // 背景色隨系統切換
+                .background(Color(.systemBackground))
                 
-                Divider() // 加入一條細微的分隔線
+                Divider()
 
                 // --- 下方地圖與控制區域 ---
                 ZStack(alignment: .trailing) {
@@ -63,9 +64,11 @@ struct TimelineView: View {
                         }
                     }
 
-                    // 放大縮小按鈕
+                    // 靈活的放大縮小按鈕
                     VStack(spacing: 12) {
-                        Button { zoom(by: 0.5) } label: {
+                        Button {
+                            zoom(by: 0.6) // 縮小 Span = 放大地圖 (變為原來的 0.6 倍)
+                        } label: {
                             Image(systemName: "plus.circle.fill")
                                 .resizable()
                                 .frame(width: 44, height: 44)
@@ -73,7 +76,9 @@ struct TimelineView: View {
                                 .shadow(radius: 4)
                         }
 
-                        Button { zoom(by: 2.0) } label: {
+                        Button {
+                            zoom(by: 1.6) // 增大 Span = 縮小地圖 (變為原來的 1.6 倍)
+                        } label: {
                             Image(systemName: "minus.circle.fill")
                                 .resizable()
                                 .frame(width: 44, height: 44)
@@ -98,7 +103,11 @@ struct TimelineView: View {
                                 .cornerRadius(12)
                         }
                     } else {
-                        Button(action: { locationManager.stopTracking() }) {
+                        Button(action: {
+                            locationManager.stopTracking()
+                            // 呼叫存檔邏輯
+                            // 注意：這裡需要取得 modelContext，可在 ContentView 傳入或在此處宣告
+                        }) {
                             Label("停止紀錄", systemImage: "stop.fill")
                                 .font(.headline)
                                 .padding()
@@ -111,38 +120,30 @@ struct TimelineView: View {
                 }
                 .padding()
             }
-            .navigationBarHidden(true) // 隱藏原本內建的導覽列，改用我們自訂的 Header
+            .navigationBarHidden(true)
             .sheet(isPresented: $showMemberCenter) {
-                // 這裡定義點擊會員中心後彈出的畫面
                 MemberCenterView()
             }
         }
     }
 
+    // --- 改進後的靈活縮放邏輯 ---
     private func zoom(by factor: Double) {
-        let center = locationManager.trackPoints.last ?? CLLocationCoordinate2D(latitude: 24.1373, longitude: 120.6866)
-        let newSpan = MKCoordinateSpan(latitudeDelta: 0.05 * factor, longitudeDelta: 0.05 * factor)
-        let newRegion = MKCoordinateRegion(center: center, span: newSpan)
-        withAnimation(.easeInOut) {
-            position = .region(newRegion)
-        }
-    }
-}
+        // 1. 基於當前的 Span 進行運算，而不是固定的 0.05
+        currentSpan.latitudeDelta *= factor
+        currentSpan.longitudeDelta *= factor
+        
+        // 2. 限制縮放邊界，避免縮到無限大或無限小
+        // 最小跨度 0.001 (極度放大), 最大跨度 10.0 (看整個國家)
+        currentSpan.latitudeDelta = min(max(currentSpan.latitudeDelta, 0.001), 10.0)
+        currentSpan.longitudeDelta = min(max(currentSpan.longitudeDelta, 0.001), 10.0)
 
-// 歷史列表頁面
-struct HistoryListView: View {
-    var routes: [SavedRoute]
-    var body: some View {
-        NavigationStack {
-            List(routes) { route in
-                VStack(alignment: .leading) {
-                    Text(route.startTime.formatted(date: .abbreviated, time: .shortened))
-                        .font(.headline)
-                    Text("共紀錄 \(route.latitudes.count) 個座標點")
-                        .font(.caption).foregroundColor(.gray)
-                }
-            }
-            .navigationTitle("歷史路徑")
+        // 3. 取得地圖中心點 (優先使用使用者最後座標)
+        let center = locationManager.trackPoints.last ?? CLLocationCoordinate2D(latitude: 24.1373, longitude: 120.6866)
+        
+        // 4. 使用更平滑的動畫更新相機
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            position = .region(MKCoordinateRegion(center: center, span: currentSpan))
         }
     }
 }
