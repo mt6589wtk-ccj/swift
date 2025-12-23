@@ -129,23 +129,6 @@ struct TimelineView: View {
     }
 }
 
-// 簡單的會員中心預覽頁面
-struct MemberCenterView: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("會員中心").font(.largeTitle).bold()
-            Image(systemName: "person.circle").resizable().frame(width: 100, height: 100)
-            Text("匿名用戶").font(.title2)
-            List {
-                Text("個人基本資料")
-                Text("歷史路徑紀錄")
-                Text("設定")
-            }
-        }
-        .padding(.top, 50)
-    }
-}
-
 // 歷史列表頁面
 struct HistoryListView: View {
     var routes: [SavedRoute]
